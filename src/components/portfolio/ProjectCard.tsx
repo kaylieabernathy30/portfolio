@@ -2,6 +2,7 @@ import type { Project } from '@/types';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Layers } from 'lucide-react'; 
 
 interface ProjectCardProps {
@@ -34,9 +35,11 @@ export function ProjectCard({ project, index, onClick }: ProjectCardProps) {
       )}
       <CardHeader>
         <CardTitle className="font-headline text-xl lg:text-2xl">{project.title}</CardTitle>
-        <CardDescription className="text-muted-foreground pt-1 h-20 overflow-y-auto">
-          {project.description}
-        </CardDescription>
+        <ScrollArea className="h-20">
+          <CardDescription className="text-muted-foreground pt-1">
+            {project.description}
+          </CardDescription>
+        </ScrollArea>
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="flex flex-wrap gap-2">
