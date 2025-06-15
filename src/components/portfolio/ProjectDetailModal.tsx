@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Project } from '@/types';
@@ -5,8 +6,9 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Layers, ExternalLink, X, Github } from 'lucide-react';
+import { Layers, ExternalLink, X, Github, Image as ImageIcon } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 
 interface ProjectDetailModalProps {
   project: Project | null;
@@ -17,6 +19,9 @@ interface ProjectDetailModalProps {
 export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailModalProps) {
   if (!project) return null;
 
+  const hasImages = project.imageUrls && project.imageUrls.length > 0;
+  const hasMultipleImages = hasImages && project.imageUrls.length > 1;
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0">
@@ -25,16 +30,42 @@ export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailMo
         </DialogHeader>
         <ScrollArea className="flex-grow">
           <div className="px-6 space-y-4 py-4">
-            {project.imageUrl && (
+            {hasImages && !hasMultipleImages && (
               <div className="relative w-full h-64 md:h-80 rounded-md overflow-hidden my-4" data-ai-hint="project hero image">
                 <Image
-                  src={project.imageUrl}
+                  src={project.imageUrls[0]}
                   alt={project.title}
                   layout="fill"
                   objectFit="cover"
                 />
               </div>
             )}
+            {hasMultipleImages && (
+              <Carousel className="w-full my-4" data-ai-hint="project image gallery">
+                <CarouselContent>
+                  {project.imageUrls.map((url, index) => (
+                    <CarouselItem key={index}>
+                      <div className="relative w-full h-64 md:h-80 rounded-md overflow-hidden">
+                        <Image
+                          src={url}
+                          alt={`${project.title} - Image ${index + 1}`}
+                          layout="fill"
+                          objectFit="cover"
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
+            )}
+            {!hasImages && (
+                 <div className="relative w-full h-64 md:h-80 rounded-md overflow-hidden my-4 bg-muted flex items-center justify-center" data-ai-hint="placeholder image">
+                    <ImageIcon className="h-24 w-24 text-muted-foreground" />
+                 </div>
+            )}
+
             <DialogDescription className="text-base text-foreground leading-relaxed">
               {project.description}
             </DialogDescription>
@@ -52,7 +83,6 @@ export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailMo
             </div>
           </div>
           <DialogFooter className="p-6 pt-4 border-t sticky bottom-0 bg-background">
-          {/* Example links - adapt as needed, perhaps based on project data */}
           <Button variant="outline" asChild>
             <a href="#" target="_blank" rel="noopener noreferrer">
               <ExternalLink className="mr-2 h-4 w-4" />
@@ -70,7 +100,6 @@ export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailMo
           </Button>
         </DialogFooter>
         </ScrollArea>
-
       </DialogContent>
     </Dialog>
   );

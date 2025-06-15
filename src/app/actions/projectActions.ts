@@ -4,16 +4,14 @@
 import type { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { projectServerValidationSchema, type ProjectFormData } from '@/lib/schemas';
-import { db } from '@/lib/firebase/config'; // Client SDK Firestore for reads
-import { adminFirestore } from '@/lib/firebase/admin'; // Admin SDK Firestore for writes
+// import { db } from '@/lib/firebase/config'; // Client SDK Firestore for reads
+import { adminFirestore, verifyIdToken } from '@/lib/firebase/admin'; // Admin SDK Firestore for writes
 import { FieldValue } from 'firebase-admin/firestore'; // Admin SDK FieldValue
-import { verifyIdToken } from '@/lib/firebase/admin'; 
 import { collection, getDocs, query, orderBy, Timestamp as ClientTimestamp } from 'firebase/firestore'; // Client SDK for reads
 import type { Project } from '@/types';
+import { db } from '@/lib/firebase/config';
 
-// This function verifies the user's ID token using the Admin SDK.
-// If valid, the subsequent Firestore operation (if using Admin SDK) will have admin privileges.
-// The primary purpose here is to authorize the *calling* of the server action.
+
 async function ensureAdminAuth(idToken: string | undefined) {
   if (!idToken) {
     throw new Error("Authentication token is missing. Please log in again.");
@@ -21,29 +19,32 @@ async function ensureAdminAuth(idToken: string | undefined) {
   try {
     const decodedToken = await verifyIdToken(idToken);
     console.log(`Action authorized for UID: ${decodedToken.uid}`);
-    return decodedToken; // Contains user UID and other claims
+    return decodedToken; 
   } catch (error: any) {
     console.error("Admin authentication failed:", error.message);
-    // error.message will be "Invalid or expired authentication token." from verifyIdToken if that's the case
     throw new Error(error.message || "Unauthorized: Admin access required. Invalid token.");
   }
 }
 
 export async function addProjectAction(idToken: string, formData: ProjectFormData) {
   try {
-    await ensureAdminAuth(idToken); // Authorize the action itself
+    await ensureAdminAuth(idToken); 
     const validatedFields = projectServerValidationSchema.safeParse(formData);
 
     if (!validatedFields.success) {
       return { error: "Invalid data.", issues: validatedFields.error.flatten().fieldErrors };
     }
-
-    // Use Admin SDK for the write operation
-    const docRef = await adminFirestore.collection('projects').add({
+    
+    const dataToSave = {
       ...validatedFields.data,
+      // Ensure imageUrls is an array, even if empty. Schema should handle this.
+      imageUrls: validatedFields.data.imageUrls || [], 
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
-    });
+    };
+
+
+    const docRef = await adminFirestore.collection('projects').add(dataToSave);
 
     revalidatePath('/');
     revalidatePath('/admin/dashboard');
@@ -51,11 +52,7 @@ export async function addProjectAction(idToken: string, formData: ProjectFormDat
   } catch (error: any)
    {
     console.error("Error in addProjectAction:", error);
-    // Check for specific Firebase error codes if needed, e.g. error.code
     const errorMessage = error.message || "Failed to add project.";
-    // If the error is from Firestore (like PERMISSION_DENIED, though less likely now with Admin SDK)
-    // it might have a code property, e.g. error.code === 'permission-denied'
-    // For now, returning the generic message.
     if (error.code === 7 || (typeof error.message === 'string' && error.message.includes('PERMISSION_DENIED'))) {
         return { error: `Firestore Permission Denied: ${errorMessage}. This might indicate an issue with service account permissions if using Admin SDK, or residual client SDK issues.` };
     }
@@ -65,19 +62,21 @@ export async function addProjectAction(idToken: string, formData: ProjectFormDat
 
 export async function updateProjectAction(idToken: string, id: string, formData: ProjectFormData) {
   try {
-    await ensureAdminAuth(idToken); // Authorize the action
+    await ensureAdminAuth(idToken); 
     const validatedFields = projectServerValidationSchema.safeParse(formData);
 
     if (!validatedFields.success) {
       return { error: "Invalid data.", issues: validatedFields.error.flatten().fieldErrors };
     }
-
-    // Use Admin SDK for the write operation
-    const projectRef = adminFirestore.collection('projects').doc(id);
-    await projectRef.update({
+    
+    const dataToUpdate = {
       ...validatedFields.data,
+      imageUrls: validatedFields.data.imageUrls || [],
       updatedAt: FieldValue.serverTimestamp(),
-    });
+    };
+
+    const projectRef = adminFirestore.collection('projects').doc(id);
+    await projectRef.update(dataToUpdate);
 
     revalidatePath('/');
     revalidatePath('/admin/dashboard');
@@ -90,9 +89,8 @@ export async function updateProjectAction(idToken: string, id: string, formData:
 
 export async function deleteProjectAction(idToken: string, id: string) {
   try {
-    await ensureAdminAuth(idToken); // Authorize the action
+    await ensureAdminAuth(idToken);
 
-    // Use Admin SDK for the delete operation
     const projectRef = adminFirestore.collection('projects').doc(id);
     await projectRef.delete();
 
@@ -105,29 +103,26 @@ export async function deleteProjectAction(idToken: string, id: string) {
   }
 }
 
-// Public read, uses client SDK as Firestore rules allow public reads.
-// Does not require admin authentication for fetching.
 export async function getAdminProjects(): Promise<Project[]> {
   try {
-    const projectsCol = collection(db, 'projects'); // Using client SDK 'db'
+    const projectsCol = collection(db, 'projects'); 
     const q = query(projectsCol, orderBy('createdAt', 'desc'));
     const projectSnapshot = await getDocs(q);
 
     return projectSnapshot.docs.map(docSnapshot => {
       const data = docSnapshot.data();
-      // Ensure Timestamps are converted correctly, whether from Client SDK or Admin SDK
       const convertTimestamp = (timestampField: any): Date => {
-        if (!timestampField) return new Date(); // Default or error case
-        if (timestampField instanceof ClientTimestamp) { // firebase/firestore Timestamp
+        if (!timestampField) return new Date(); 
+        if (timestampField instanceof ClientTimestamp) { 
           return timestampField.toDate();
         }
-        if (timestampField._seconds && typeof timestampField._nanoseconds === 'number') { // firebase-admin/firestore Timestamp like
+        if (timestampField._seconds && typeof timestampField._nanoseconds === 'number') { 
           return new Date(timestampField._seconds * 1000 + timestampField._nanoseconds / 1000000);
         }
         if (typeof timestampField === 'string' || typeof timestampField === 'number') {
           return new Date(timestampField);
         }
-        return new Date(); // Fallback
+        return new Date(); 
       };
       
       return {
@@ -135,7 +130,7 @@ export async function getAdminProjects(): Promise<Project[]> {
         title: data.title,
         description: data.description,
         tags: Array.isArray(data.tags) ? data.tags : (typeof data.tags === 'string' ? data.tags.split(',').map(t => t.trim()) : []),
-        imageUrl: data.imageUrl,
+        imageUrls: Array.isArray(data.imageUrls) ? data.imageUrls : [], // Ensure imageUrls is an array
         createdAt: convertTimestamp(data.createdAt),
         updatedAt: convertTimestamp(data.updatedAt),
       } as Project;
@@ -145,4 +140,3 @@ export async function getAdminProjects(): Promise<Project[]> {
     return [];
   }
 }
-

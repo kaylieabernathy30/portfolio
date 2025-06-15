@@ -1,3 +1,4 @@
+
 import type { Project } from '@/types';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +13,8 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, index, onClick }: ProjectCardProps) {
-  const animationDelay = `${index * 100}ms`; // Staggered animation delay
+  const animationDelay = `${index * 100}ms`; 
+  const firstImageUrl = project.imageUrls && project.imageUrls.length > 0 ? project.imageUrls[0] : null;
 
   return (
     <Card 
@@ -21,10 +23,10 @@ export function ProjectCard({ project, index, onClick }: ProjectCardProps) {
       onClick={onClick}
       data-ai-hint="project showcase"
     >
-      {project.imageUrl && (
+      {firstImageUrl ? (
         <div className="relative w-full h-48 sm:h-56 overflow-hidden">
           <Image
-            src={project.imageUrl}
+            src={firstImageUrl}
             alt={project.title}
             layout="fill"
             objectFit="cover"
@@ -32,6 +34,10 @@ export function ProjectCard({ project, index, onClick }: ProjectCardProps) {
             data-ai-hint="technology project"
           />
         </div>
+      ) : (
+         <div className="relative w-full h-48 sm:h-56 overflow-hidden bg-muted flex items-center justify-center">
+            <Layers className="h-12 w-12 text-muted-foreground" />
+         </div>
       )}
       <CardHeader>
         <CardTitle className="font-headline text-xl lg:text-2xl">{project.title}</CardTitle>
@@ -45,14 +51,13 @@ export function ProjectCard({ project, index, onClick }: ProjectCardProps) {
         <div className="flex flex-wrap gap-2">
           {project.tags.map((tag) => (
             <Badge key={tag} variant="secondary" className="bg-primary/20 text-primary hover:bg-primary/30">
-              <Layers className="mr-1 h-3 w-3" /> {/* Generic icon for tags */}
+              <Layers className="mr-1 h-3 w-3" /> 
               {tag}
             </Badge>
           ))}
         </div>
       </CardContent>
       <CardFooter>
-        {/* Optional: Link to project or source code can be added here or in modal */}
       </CardFooter>
     </Card>
   );

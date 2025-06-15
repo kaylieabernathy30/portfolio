@@ -6,7 +6,7 @@ export interface Project {
   title: string;
   description: string;
   tags: string[];
-  imageUrl?: string;
-  createdAt?: Timestamp | Date | string; // Allow for Firestore Timestamp, Date object, or string representation
+  imageUrls: string[]; // Changed from imageUrl: string
+  createdAt?: Timestamp | Date | string; 
   updatedAt?: Timestamp | Date | string;
 }

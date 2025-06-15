@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { addProjectAction, updateProjectAction } from "@/app/actions/projectActions";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { auth } from "@/lib/firebase/config"; // Import Firebase auth
+import { auth } from "@/lib/firebase/config"; 
 
 interface ProjectFormDialogProps {
   isOpen: boolean;
@@ -32,8 +32,8 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
     defaultValues: {
       title: "",
       description: "",
-      tags: "" as any,
-      imageUrl: "",
+      tags: "" as any, 
+      imageUrls: "" as any, // Will be transformed to array by schema
     },
   });
 
@@ -43,14 +43,14 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
         title: projectToEdit.title,
         description: projectToEdit.description,
         tags: projectToEdit.tags.join(", ") as any,
-        imageUrl: projectToEdit.imageUrl || "",
+        imageUrls: projectToEdit.imageUrls ? projectToEdit.imageUrls.join(", ") : "" as any,
       });
     } else {
       form.reset({
         title: "",
         description: "",
         tags: "" as any,
-        imageUrl: "",
+        imageUrls: "" as any,
       });
     }
   }, [projectToEdit, form, isOpen]);
@@ -67,13 +67,11 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
         variant: "destructive",
       });
       setIsSubmitting(false);
-      // Optional: redirect to login or force re-auth
-      // router.push('/admin');
       return;
     }
 
     try {
-      const idToken = await currentUser.getIdToken(true); // Force refresh token
+      const idToken = await currentUser.getIdToken(true); 
       if (projectToEdit) {
         result = await updateProjectAction(idToken, projectToEdit.id, data);
       } else {
@@ -89,7 +87,6 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
         return;
     }
     
-
     setIsSubmitting(false);
 
     if (result.error) {
@@ -160,12 +157,16 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
             />
             <FormField
               control={form.control}
-              name="imageUrl"
+              name="imageUrls"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URL (optional)</FormLabel>
+                  <FormLabel>Image URLs (comma-separated, optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com/image.png" {...field} />
+                    <Textarea 
+                      placeholder="https://example.com/image1.png, https://example.com/image2.gif" 
+                      {...field} 
+                      rows={3}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

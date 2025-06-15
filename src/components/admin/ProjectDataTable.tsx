@@ -13,7 +13,7 @@ import { getAdminProjects, deleteProjectAction } from "@/app/actions/projectActi
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { auth } from "@/lib/firebase/config"; // Import Firebase auth
+import { auth } from "@/lib/firebase/config"; 
 
 export function ProjectDataTable() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -73,7 +73,7 @@ export function ProjectDataTable() {
     startTransition(async () => {
       let result;
       try {
-        const idToken = await currentUser.getIdToken(true); // Force refresh token
+        const idToken = await currentUser.getIdToken(true); 
         result = await deleteProjectAction(idToken, projectToDelete.id);
       } catch (tokenError: any) {
         toast({
@@ -90,7 +90,7 @@ export function ProjectDataTable() {
         toast({ title: "Error", description: result.error, variant: "destructive" });
       } else {
         toast({ title: "Success", description: result.success });
-        fetchProjects(); // Re-fetch projects
+        fetchProjects(); 
       }
       setProjectToDelete(null);
       setIsDeleting(false);
@@ -136,9 +136,9 @@ export function ProjectDataTable() {
               projects.map((project) => (
                 <TableRow key={project.id}>
                   <TableCell>
-                    {project.imageUrl ? (
+                    {project.imageUrls && project.imageUrls.length > 0 && project.imageUrls[0] ? (
                       <Image
-                        src={project.imageUrl}
+                        src={project.imageUrls[0]}
                         alt={project.title}
                         width={60}
                         height={40}
