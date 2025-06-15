@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { projectSchema, type ProjectFormData } from "@/lib/schemas";
+import { projectFormInputSchema, type ProjectFormData } from "@/lib/schemas"; // Updated schema import
 import type { Project } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,11 +26,11 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ProjectFormData>({
-    resolver: zodResolver(projectSchema),
+    resolver: zodResolver(projectFormInputSchema), // Use the form input schema
     defaultValues: {
       title: "",
       description: "",
-      tags: "", // Stored as comma-separated string in form
+      tags: "" as any, // Initialize tags as string for the form input, will be transformed to string[] by resolver
       imageUrl: "",
     },
   });
@@ -40,20 +40,20 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
       form.reset({
         title: projectToEdit.title,
         description: projectToEdit.description,
-        tags: projectToEdit.tags.join(", "),
+        tags: projectToEdit.tags.join(", ") as any, // Join array to string for form input
         imageUrl: projectToEdit.imageUrl || "",
       });
     } else {
       form.reset({
         title: "",
         description: "",
-        tags: "",
+        tags: "" as any, // Reset as string for form input
         imageUrl: "",
       });
     }
   }, [projectToEdit, form, isOpen]); // Rerun effect if isOpen changes, to reset form if dialog reopens
 
-  async function onSubmit(data: ProjectFormData) {
+  async function onSubmit(data: ProjectFormData) { // data.tags will be string[] here due to resolver's transform
     setIsSubmitting(true);
     let result;
     if (projectToEdit) {
@@ -123,6 +123,7 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
                 <FormItem>
                   <FormLabel>Tags (comma-separated)</FormLabel>
                   <FormControl>
+                    {/* The field value will be string here, resolver handles transformation for submission */}
                     <Input placeholder="React, Next.js, Firebase" {...field} />
                   </FormControl>
                   <FormMessage />

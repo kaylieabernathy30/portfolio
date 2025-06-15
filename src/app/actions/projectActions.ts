@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from 'next/cache';
-import { projectSchema, type ProjectFormData } from '@/lib/schemas';
+import { projectServerValidationSchema, type ProjectFormData } from '@/lib/schemas'; // Updated schema import
 // import { db, auth as firebaseAdminAuth } from '@/lib/firebase/config'; // For real implementation
 // import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
 // import { getAuth } from 'firebase-admin/auth'; // For server-side admin auth check if using Firebase Admin SDK
@@ -25,10 +25,11 @@ let mockProjectsDb: Array<any & {id: string, createdAt?: Date, updatedAt?: Date}
 let nextId = 3;
 
 
-export async function addProjectAction(formData: ProjectFormData) {
+export async function addProjectAction(formData: ProjectFormData) { // formData.tags is string[]
   try {
     await ensureAdmin();
-    const validatedFields = projectSchema.safeParse(formData);
+    // Validate against the schema that expects tags as string[]
+    const validatedFields = projectServerValidationSchema.safeParse(formData);
 
     if (!validatedFields.success) {
       return { error: "Invalid data.", issues: validatedFields.error.flatten().fieldErrors };
@@ -37,7 +38,7 @@ export async function addProjectAction(formData: ProjectFormData) {
     // Mock: Add to mock DB
     const newProject = { 
       id: String(nextId++), 
-      ...validatedFields.data,
+      ...validatedFields.data, // validatedFields.data.tags is string[]
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -47,7 +48,7 @@ export async function addProjectAction(formData: ProjectFormData) {
 
     // Real Firestore:
     // await addDoc(collection(db, 'projects'), {
-    //   ...validatedFields.data,
+    //   ...validatedFields.data, // data.tags would be string[] here
     //   createdAt: serverTimestamp(),
     //   updatedAt: serverTimestamp(),
     // });
@@ -60,10 +61,11 @@ export async function addProjectAction(formData: ProjectFormData) {
   }
 }
 
-export async function updateProjectAction(id: string, formData: ProjectFormData) {
+export async function updateProjectAction(id: string, formData: ProjectFormData) { // formData.tags is string[]
   try {
     await ensureAdmin();
-    const validatedFields = projectSchema.safeParse(formData);
+    // Validate against the schema that expects tags as string[]
+    const validatedFields = projectServerValidationSchema.safeParse(formData);
 
     if (!validatedFields.success) {
       return { error: "Invalid data.", issues: validatedFields.error.flatten().fieldErrors };
@@ -80,7 +82,7 @@ export async function updateProjectAction(id: string, formData: ProjectFormData)
     // Real Firestore:
     // const projectRef = doc(db, 'projects', id);
     // await updateDoc(projectRef, {
-    //   ...validatedFields.data,
+    //   ...validatedFields.data, // data.tags would be string[] here
     //   updatedAt: serverTimestamp(),
     // });
     
@@ -124,5 +126,6 @@ export async function getAdminProjects() {
   
   // Mock: Return from mock DB
   console.log("Fetching from Mock DB for admin:", mockProjectsDb);
-  return [...mockProjectsDb].sort((a,b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+  // Ensure consistent data structure for tags (as string array)
+  return [...mockProjectsDb].map(p => ({...p, tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? p.tags.split(',').map(t=>t.trim()) : []) })).sort((a,b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
 }
