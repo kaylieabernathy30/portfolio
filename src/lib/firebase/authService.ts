@@ -15,7 +15,9 @@ export async function signInUser(credentials: LoginFormData): Promise<{ user?: U
     return { user: userCredential.user };
   } catch (e) {
     const error = e as AuthError;
-    // Provide more specific error messages
+    if (error.code === 'auth/configuration-not-found') {
+      return { error: 'Firebase Authentication is not configured for this project. Please enable Email/Password sign-in in the Firebase Console.' };
+    }
     if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
       return { error: 'Invalid email or password.' };
     }
@@ -40,6 +42,9 @@ export async function signUpUser(credentials: SignupFormData): Promise<{ user?: 
     return { user: userCredential.user };
   } catch (e) {
     const error = e as AuthError;
+    if (error.code === 'auth/configuration-not-found') {
+      return { error: 'Firebase Authentication is not configured for this project. Please enable Email/Password sign-in in the Firebase Console.' };
+    }
     if (error.code === 'auth/email-already-in-use') {
       return { error: 'This email address is already in use.' };
     }
