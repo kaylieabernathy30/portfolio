@@ -1,10 +1,11 @@
+
 "use server";
 
 import { revalidatePath } from 'next/cache';
-import { projectServerValidationSchema, type ProjectFormData } from '@/lib/schemas'; // Updated schema import
-// import { db, auth as firebaseAdminAuth } from '@/lib/firebase/config'; // For real implementation
-// import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
-// import { getAuth } from 'firebase-admin/auth'; // For server-side admin auth check if using Firebase Admin SDK
+import { projectServerValidationSchema, type ProjectFormData } from '@/lib/schemas';
+import { db } from '@/lib/firebase/config'; // For real implementation
+import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import type { Project } from '@/types';
 
 // Placeholder for Firebase admin check - in a real app, verify user is admin.
 // This is a simplified check. Real implementation should verify JWT or use Admin SDK.
@@ -17,79 +18,50 @@ async function ensureAdmin() {
   return true; 
 }
 
-// Mock database for demonstration as we don't have a live Firestore connection here
-let mockProjectsDb: Array<any & {id: string, createdAt?: Date, updatedAt?: Date}> = [
-  { id: '1', title: 'E-commerce Platform', description: 'A full-featured e-commerce platform...', tags: ['Next.js', 'Stripe'], imageUrl: 'https://placehold.co/600x400.png', createdAt: new Date(), updatedAt: new Date() },
-  { id: '2', title: 'Task Management App', description: 'A collaborative task management application...', tags: ['React', 'Node.js'], imageUrl: 'https://placehold.co/600x400.png', createdAt: new Date(), updatedAt: new Date() },
-];
-let nextId = 3;
-
-
-export async function addProjectAction(formData: ProjectFormData) { // formData.tags is string[]
+export async function addProjectAction(formData: ProjectFormData) {
   try {
     await ensureAdmin();
-    // Validate against the schema that expects tags as string[]
     const validatedFields = projectServerValidationSchema.safeParse(formData);
 
     if (!validatedFields.success) {
       return { error: "Invalid data.", issues: validatedFields.error.flatten().fieldErrors };
     }
     
-    // Mock: Add to mock DB
-    const newProject = { 
-      id: String(nextId++), 
-      ...validatedFields.data, // validatedFields.data.tags is string[]
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    mockProjectsDb.push(newProject);
-    console.log("Mock DB after add:", mockProjectsDb);
-
-
-    // Real Firestore:
-    // await addDoc(collection(db, 'projects'), {
-    //   ...validatedFields.data, // data.tags would be string[] here
-    //   createdAt: serverTimestamp(),
-    //   updatedAt: serverTimestamp(),
-    // });
+    await addDoc(collection(db, 'projects'), {
+      ...validatedFields.data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
 
     revalidatePath('/');
     revalidatePath('/admin/dashboard');
     return { success: "Project added successfully." };
   } catch (error: any) {
+    console.error("Error in addProjectAction:", error);
     return { error: error.message || "Failed to add project." };
   }
 }
 
-export async function updateProjectAction(id: string, formData: ProjectFormData) { // formData.tags is string[]
+export async function updateProjectAction(id: string, formData: ProjectFormData) {
   try {
     await ensureAdmin();
-    // Validate against the schema that expects tags as string[]
     const validatedFields = projectServerValidationSchema.safeParse(formData);
 
     if (!validatedFields.success) {
       return { error: "Invalid data.", issues: validatedFields.error.flatten().fieldErrors };
     }
 
-    // Mock: Update in mock DB
-    const projectIndex = mockProjectsDb.findIndex(p => p.id === id);
-    if (projectIndex === -1) {
-      return { error: "Project not found." };
-    }
-    mockProjectsDb[projectIndex] = { ...mockProjectsDb[projectIndex], ...validatedFields.data, updatedAt: new Date() };
-    console.log("Mock DB after update:", mockProjectsDb);
-
-    // Real Firestore:
-    // const projectRef = doc(db, 'projects', id);
-    // await updateDoc(projectRef, {
-    //   ...validatedFields.data, // data.tags would be string[] here
-    //   updatedAt: serverTimestamp(),
-    // });
+    const projectRef = doc(db, 'projects', id);
+    await updateDoc(projectRef, {
+      ...validatedFields.data,
+      updatedAt: serverTimestamp(),
+    });
     
     revalidatePath('/');
     revalidatePath('/admin/dashboard');
     return { success: "Project updated successfully." };
   } catch (error: any) {
+    console.error("Error in updateProjectAction:", error);
     return { error: error.message || "Failed to update project." };
   }
 }
@@ -98,34 +70,39 @@ export async function deleteProjectAction(id: string) {
   try {
     await ensureAdmin();
 
-    // Mock: Delete from mock DB
-    mockProjectsDb = mockProjectsDb.filter(p => p.id !== id);
-    console.log("Mock DB after delete:", mockProjectsDb);
-
-    // Real Firestore:
-    // const projectRef = doc(db, 'projects', id);
-    // await deleteDoc(projectRef);
+    const projectRef = doc(db, 'projects', id);
+    await deleteDoc(projectRef);
     
     revalidatePath('/');
     revalidatePath('/admin/dashboard');
     return { success: "Project deleted successfully." };
   } catch (error: any) {
+    console.error("Error in deleteProjectAction:", error);
     return { error: error.message || "Failed to delete project." };
   }
 }
 
-// This function would fetch projects for the admin dashboard.
-// It's similar to getProjects but might not need timestamp conversion if used directly server-side.
-export async function getAdminProjects() {
+export async function getAdminProjects(): Promise<Project[]> {
   await ensureAdmin(); 
-  // Real Firestore:
-  // const projectsCol = collection(db, 'projects');
-  // const q = query(projectsCol, orderBy('createdAt', 'desc'));
-  // const projectSnapshot = await getDocs(q);
-  // return projectSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Project[];
-  
-  // Mock: Return from mock DB
-  console.log("Fetching from Mock DB for admin:", mockProjectsDb);
-  // Ensure consistent data structure for tags (as string array)
-  return [...mockProjectsDb].map(p => ({...p, tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? p.tags.split(',').map(t=>t.trim()) : []) })).sort((a,b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+  try {
+    const projectsCol = collection(db, 'projects');
+    const q = query(projectsCol, orderBy('createdAt', 'desc'));
+    const projectSnapshot = await getDocs(q);
+    
+    return projectSnapshot.docs.map(docSnapshot => {
+      const data = docSnapshot.data();
+      return {
+        id: docSnapshot.id,
+        title: data.title,
+        description: data.description,
+        tags: Array.isArray(data.tags) ? data.tags : (typeof data.tags === 'string' ? data.tags.split(',').map(t => t.trim()) : []),
+        imageUrl: data.imageUrl,
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date()),
+        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : new Date()),
+      } as Project;
+    });
+  } catch (error) {
+    console.error("Error fetching admin projects:", error);
+    return [];
+  }
 }
