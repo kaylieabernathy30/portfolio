@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Layers, ExternalLink, X } from 'lucide-react';
+import { Layers, ExternalLink, X, Github } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ProjectDetailModalProps {
@@ -24,7 +24,7 @@ export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailMo
           <DialogTitle className="font-headline text-2xl md:text-3xl">{project.title}</DialogTitle>
         </DialogHeader>
         <ScrollArea className="flex-grow">
-          <div className="px-6 space-y-4">
+          <div className="px-6 space-y-4 py-4">
             {project.imageUrl && (
               <div className="relative w-full h-64 md:h-80 rounded-md overflow-hidden my-4" data-ai-hint="project hero image">
                 <Image
