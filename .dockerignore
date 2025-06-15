@@ -1,0 +1,41 @@
+# Git files
+.git
+.gitignore
+
+# Node modules
+node_modules
+
+# Next.js build output and cache
+.next
+
+# Docker files
+Dockerfile
+docker-compose.yml
+
+# Environment files - these should be managed securely
+.env
+.env*.local
+.env.*.local
+
+# Dependency lock files (if copied explicitly in Dockerfile early stage)
+# package-lock.json (already handled by COPY in Dockerfile)
+# yarn.lock (already handled by COPY in Dockerfile)
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor/IDE specific
+.vscode
+*.code-workspace
+
+# Other project specific files not needed in image
+README.md
+apphosting.yaml
+components.json
+# Add any other files or directories you want to exclude
