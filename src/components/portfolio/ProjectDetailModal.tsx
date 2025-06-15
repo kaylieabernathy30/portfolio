@@ -53,7 +53,7 @@ export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailMo
           </div>
           <DialogFooter className="p-6 pt-4 border-t sticky bottom-0 bg-background">
           {/* Example links - adapt as needed, perhaps based on project data */}
-          {/* <Button variant="outline" asChild>
+          <Button variant="outline" asChild>
             <a href="#" target="_blank" rel="noopener noreferrer">
               <ExternalLink className="mr-2 h-4 w-4" />
               Live Demo
@@ -64,7 +64,7 @@ export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailMo
               <Github className="mr-2 h-4 w-4" />
               Source Code
             </a>
-          </Button> */}
+          </Button>
           <Button variant="outline" onClick={onClose}>
             <X className="mr-2 h-4 w-4" /> Close
           </Button>
