@@ -1,3 +1,4 @@
+// src/components/auth/SignupForm.tsx
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -7,53 +8,53 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { loginSchema, type LoginFormData } from "@/lib/schemas";
-import { signInUser } from "@/lib/firebase/authService"; // Client-side auth function
+import { signupSchema, type SignupFormData } from "@/lib/schemas";
+import { signUpUser } from "@/lib/firebase/authService";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
-export function LoginForm() {
+export function SignupForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
     defaultValues: {
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
-  async function onSubmit(data: LoginFormData) {
+  async function onSubmit(data: SignupFormData) {
     setIsLoading(true);
-    const { error } = await signInUser(data);
+    const { error } = await signUpUser(data);
     setIsLoading(false);
 
     if (error) {
       toast({
-        title: "Login Failed",
+        title: "Signup Failed",
         description: error,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Login Successful",
-        description: "Redirecting to dashboard...",
+        title: "Signup Successful",
+        description: "Your account has been created. Redirecting to dashboard...",
       });
       router.push("/admin/dashboard");
-      router.refresh(); // Important to re-fetch server components or run layout guards
+      router.refresh(); 
     }
   }
 
   return (
     <Card className="w-full max-w-md mx-auto shadow-xl">
       <CardHeader>
-        <CardTitle className="text-2xl font-headline">Admin Login</CardTitle>
-        <CardDescription>Enter your credentials to access the dashboard.</CardDescription>
+        <CardTitle className="text-2xl font-headline">Create Admin Account</CardTitle>
+        <CardDescription>Enter your details to create an admin account.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -84,18 +85,31 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Log In"}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sign Up"}
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
+          Already have an account?{" "}
           <Button variant="link" asChild className="p-0 h-auto">
-            <Link href="/admin/signup">
-              Sign Up
+            <Link href="/admin">
+              Log In
             </Link>
           </Button>
         </p>

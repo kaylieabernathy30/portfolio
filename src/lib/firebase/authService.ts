@@ -2,11 +2,12 @@
 import { 
   signInWithEmailAndPassword, 
   signOut as firebaseSignOut,
+  createUserWithEmailAndPassword,
   type UserCredential,
   type AuthError
 } from 'firebase/auth';
 import { auth } from './config';
-import type { LoginFormData } from '@/lib/schemas';
+import type { LoginFormData, SignupFormData } from '@/lib/schemas';
 
 export async function signInUser(credentials: LoginFormData): Promise<{ user?: UserCredential['user'], error?: string }> {
   try {
@@ -29,5 +30,22 @@ export async function signOutUser(): Promise<{ success?: boolean, error?: string
   } catch (e) {
     const error = e as AuthError;
     return { error: error.message || 'Sign out failed.' };
+  }
+}
+
+export async function signUpUser(credentials: SignupFormData): Promise<{ user?: UserCredential['user'], error?: string }> {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
+    // You might want to do something with the userCredential here, like setting up a user profile in Firestore
+    return { user: userCredential.user };
+  } catch (e) {
+    const error = e as AuthError;
+    if (error.code === 'auth/email-already-in-use') {
+      return { error: 'This email address is already in use.' };
+    }
+    if (error.code === 'auth/weak-password') {
+      return { error: 'The password is too weak.' };
+    }
+    return { error: error.message || 'Signup failed. Please try again.' };
   }
 }
