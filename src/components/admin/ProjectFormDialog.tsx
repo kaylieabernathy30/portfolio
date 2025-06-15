@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { projectFormInputSchema, type ProjectFormData } from "@/lib/schemas"; // Updated schema import
+import { projectFormInputSchema, type ProjectFormData } from "@/lib/schemas";
 import type { Project } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,12 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { addProjectAction, updateProjectAction } from "@/app/actions/projectActions";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { auth } from "@/lib/firebase/config"; // Import Firebase auth
 
 interface ProjectFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
   projectToEdit?: Project | null;
-  onSuccess: () => void; // Callback to refresh data or close dialog
+  onSuccess: () => void;
 }
 
 export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }: ProjectFormDialogProps) {
@@ -26,11 +28,11 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ProjectFormData>({
-    resolver: zodResolver(projectFormInputSchema), // Use the form input schema
+    resolver: zodResolver(projectFormInputSchema),
     defaultValues: {
       title: "",
       description: "",
-      tags: "" as any, // Initialize tags as string for the form input, will be transformed to string[] by resolver
+      tags: "" as any,
       imageUrl: "",
     },
   });
@@ -40,27 +42,54 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
       form.reset({
         title: projectToEdit.title,
         description: projectToEdit.description,
-        tags: projectToEdit.tags.join(", ") as any, // Join array to string for form input
+        tags: projectToEdit.tags.join(", ") as any,
         imageUrl: projectToEdit.imageUrl || "",
       });
     } else {
       form.reset({
         title: "",
         description: "",
-        tags: "" as any, // Reset as string for form input
+        tags: "" as any,
         imageUrl: "",
       });
     }
-  }, [projectToEdit, form, isOpen]); // Rerun effect if isOpen changes, to reset form if dialog reopens
+  }, [projectToEdit, form, isOpen]);
 
-  async function onSubmit(data: ProjectFormData) { // data.tags will be string[] here due to resolver's transform
+  async function onSubmit(data: ProjectFormData) {
     setIsSubmitting(true);
     let result;
-    if (projectToEdit) {
-      result = await updateProjectAction(projectToEdit.id, data);
-    } else {
-      result = await addProjectAction(data);
+    
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to perform this action. Please log in again.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      // Optional: redirect to login or force re-auth
+      // router.push('/admin');
+      return;
     }
+
+    try {
+      const idToken = await currentUser.getIdToken(true); // Force refresh token
+      if (projectToEdit) {
+        result = await updateProjectAction(idToken, projectToEdit.id, data);
+      } else {
+        result = await addProjectAction(idToken, data);
+      }
+    } catch (tokenError: any) {
+        toast({
+          title: "Authentication Error",
+          description: tokenError.message || "Failed to get authentication token. Please try again.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+    }
+    
+
     setIsSubmitting(false);
 
     if (result.error) {
@@ -74,7 +103,7 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
         title: `Project ${projectToEdit ? 'Updated' : 'Added'}`,
         description: result.success,
       });
-      onSuccess(); // Call success callback (e.g., refresh data, close dialog)
+      onSuccess();
       onClose();
     }
   }
@@ -123,7 +152,6 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
                 <FormItem>
                   <FormLabel>Tags (comma-separated)</FormLabel>
                   <FormControl>
-                    {/* The field value will be string here, resolver handles transformation for submission */}
                     <Input placeholder="React, Next.js, Firebase" {...field} />
                   </FormControl>
                   <FormMessage />

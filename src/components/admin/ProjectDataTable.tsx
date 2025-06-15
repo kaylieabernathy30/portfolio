@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Project } from "@/types";
@@ -12,6 +13,7 @@ import { getAdminProjects, deleteProjectAction } from "@/app/actions/projectActi
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { auth } from "@/lib/firebase/config"; // Import Firebase auth
 
 export function ProjectDataTable() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -27,9 +29,6 @@ export function ProjectDataTable() {
   const fetchProjects = async () => {
     setIsLoading(true);
     try {
-      // In a real app with server components, this data might be passed as a prop
-      // or fetched using a server action if this component itself can't be async.
-      // For client component using server action for fetch:
       const fetchedProjects = await getAdminProjects();
       setProjects(fetchedProjects);
     } catch (error) {
@@ -58,9 +57,35 @@ export function ProjectDataTable() {
 
   const confirmDelete = async () => {
     if (!projectToDelete) return;
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to delete a project. Please log in again.",
+        variant: "destructive",
+      });
+      setProjectToDelete(null);
+      return;
+    }
+    
     setIsDeleting(true);
     startTransition(async () => {
-      const result = await deleteProjectAction(projectToDelete.id);
+      let result;
+      try {
+        const idToken = await currentUser.getIdToken(true); // Force refresh token
+        result = await deleteProjectAction(idToken, projectToDelete.id);
+      } catch (tokenError: any) {
+        toast({
+          title: "Authentication Error",
+          description: tokenError.message || "Failed to get authentication token. Please try again.",
+          variant: "destructive",
+        });
+        setIsDeleting(false);
+        setProjectToDelete(null);
+        return;
+      }
+
       if (result.error) {
         toast({ title: "Error", description: result.error, variant: "destructive" });
       } else {
@@ -73,7 +98,7 @@ export function ProjectDataTable() {
   };
 
   const onFormSuccess = () => {
-    fetchProjects(); // Re-fetch after add/edit
+    fetchProjects(); 
     setIsFormOpen(false);
   };
 
