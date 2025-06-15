@@ -41,24 +41,34 @@ export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailMo
               </div>
             )}
             {hasMultipleImages && (
-              <Carousel className="w-full my-4" data-ai-hint="project image gallery">
-                <CarouselContent>
-                  {project.imageUrls.map((url, index) => (
-                    <CarouselItem key={index}>
-                      <div className="relative w-full h-64 md:h-80 rounded-md overflow-hidden">
-                        <Image
-                          src={url}
-                          alt={`${project.title} - Image ${index + 1}`}
-                          layout="fill"
-                          objectFit="cover"
-                        />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
+              <div className="relative w-full my-4" data-ai-hint="project image gallery"> {/* Outer relative container for positioning buttons */}
+                <Carousel className="w-full"> {/* Carousel itself */}
+                  <CarouselContent>
+                    {project.imageUrls.map((url, index) => (
+                      <CarouselItem key={index}>
+                        <div className="relative w-full h-64 md:h-80 rounded-md overflow-hidden">
+                          <Image
+                            src={url}
+                            alt={`${project.title} - Image ${index + 1}`}
+                            layout="fill"
+                            objectFit="cover"
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  {/* Previous Button: position left, inside */}
+                  <CarouselPrevious
+                    variant="outline"
+                    className="absolute top-1/2 -translate-y-1/2 left-3 z-10 h-8 w-8 rounded-full bg-background/60 p-0 text-foreground hover:bg-background/80 border-border/50 hover:border-border"
+                  />
+                  {/* Next Button: position right, inside */}
+                  <CarouselNext
+                    variant="outline"
+                    className="absolute top-1/2 -translate-y-1/2 right-3 z-10 h-8 w-8 rounded-full bg-background/60 p-0 text-foreground hover:bg-background/80 border-border/50 hover:border-border"
+                  />
+                </Carousel>
+              </div>
             )}
             {!hasImages && (
                  <div className="relative w-full h-64 md:h-80 rounded-md overflow-hidden my-4 bg-muted flex items-center justify-center" data-ai-hint="placeholder image">
