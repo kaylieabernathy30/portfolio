@@ -51,8 +51,7 @@ export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailMo
               </div>
             </div>
           </div>
-        </ScrollArea>
-        <DialogFooter className="p-6 pt-4 border-t sticky bottom-0 bg-background">
+          <DialogFooter className="p-6 pt-4 border-t sticky bottom-0 bg-background">
           {/* Example links - adapt as needed, perhaps based on project data */}
           {/* <Button variant="outline" asChild>
             <a href="#" target="_blank" rel="noopener noreferrer">
@@ -70,6 +69,8 @@ export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailMo
             <X className="mr-2 h-4 w-4" /> Close
           </Button>
         </DialogFooter>
+        </ScrollArea>
+
       </DialogContent>
     </Dialog>
   );
