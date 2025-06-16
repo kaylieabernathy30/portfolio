@@ -41,8 +41,8 @@ export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailMo
               </div>
             )}
             {hasMultipleImages && (
-              <div className="relative w-full my-4" data-ai-hint="project image gallery"> {/* Outer relative container for positioning buttons */}
-                <Carousel className="w-full"> {/* Carousel itself */}
+              <div className="relative w-full my-4" data-ai-hint="project image gallery">
+                <Carousel className="w-full"> 
                   <CarouselContent>
                     {project.imageUrls.map((url, index) => (
                       <CarouselItem key={index}>
@@ -57,12 +57,10 @@ export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailMo
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  {/* Previous Button: position left, inside */}
                   <CarouselPrevious
                     variant="outline"
                     className="absolute top-1/2 -translate-y-1/2 left-3 z-10 h-8 w-8 rounded-full bg-background/60 p-0 text-foreground hover:bg-background/80 border-border/50 hover:border-border"
                   />
-                  {/* Next Button: position right, inside */}
                   <CarouselNext
                     variant="outline"
                     className="absolute top-1/2 -translate-y-1/2 right-3 z-10 h-8 w-8 rounded-full bg-background/60 p-0 text-foreground hover:bg-background/80 border-border/50 hover:border-border"
@@ -92,19 +90,23 @@ export function ProjectDetailModal({ project, isOpen, onClose }: ProjectDetailMo
               </div>
             </div>
           </div>
-          <DialogFooter className="p-6 pt-4 border-t sticky bottom-0 bg-background">
-          <Button variant="outline" asChild>
-            <a href="#" target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Live Demo
-            </a>
-          </Button>
-          <Button variant="secondary" asChild>
-            <a href="#" target="_blank" rel="noopener noreferrer">
-              <Github className="mr-2 h-4 w-4" />
-              Source Code
-            </a>
-          </Button>
+          <DialogFooter className="p-6 pt-4 border-t sticky bottom-0 bg-background flex flex-wrap justify-end gap-2">
+          {project.liveDemoUrl && (
+            <Button variant="outline" asChild>
+              <a href={project.liveDemoUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Live Demo
+              </a>
+            </Button>
+          )}
+          {project.sourceCodeUrl && (
+            <Button variant="secondary" asChild>
+              <a href={project.sourceCodeUrl} target="_blank" rel="noopener noreferrer">
+                <Github className="mr-2 h-4 w-4" />
+                Source Code
+              </a>
+            </Button>
+          )}
           <Button variant="outline" onClick={onClose}>
             <X className="mr-2 h-4 w-4" /> Close
           </Button>

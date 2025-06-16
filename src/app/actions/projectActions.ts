@@ -4,10 +4,9 @@
 import type { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { projectServerValidationSchema, type ProjectFormData } from '@/lib/schemas';
-// import { db } from '@/lib/firebase/config'; // Client SDK Firestore for reads
-import { adminFirestore, verifyIdToken } from '@/lib/firebase/admin'; // Admin SDK Firestore for writes
-import { FieldValue } from 'firebase-admin/firestore'; // Admin SDK FieldValue
-import { collection, getDocs, query, orderBy, Timestamp as ClientTimestamp } from 'firebase/firestore'; // Client SDK for reads
+import { adminFirestore, verifyIdToken } from '@/lib/firebase/admin'; 
+import { FieldValue } from 'firebase-admin/firestore'; 
+import { collection, getDocs, query, orderBy, Timestamp as ClientTimestamp } from 'firebase/firestore'; 
 import type { Project } from '@/types';
 import { db } from '@/lib/firebase/config';
 
@@ -37,12 +36,12 @@ export async function addProjectAction(idToken: string, formData: ProjectFormDat
     
     const dataToSave = {
       ...validatedFields.data,
-      // Ensure imageUrls is an array, even if empty. Schema should handle this.
       imageUrls: validatedFields.data.imageUrls || [], 
+      liveDemoUrl: validatedFields.data.liveDemoUrl || "",
+      sourceCodeUrl: validatedFields.data.sourceCodeUrl || "",
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };
-
 
     const docRef = await adminFirestore.collection('projects').add(dataToSave);
 
@@ -72,6 +71,8 @@ export async function updateProjectAction(idToken: string, id: string, formData:
     const dataToUpdate = {
       ...validatedFields.data,
       imageUrls: validatedFields.data.imageUrls || [],
+      liveDemoUrl: validatedFields.data.liveDemoUrl || "",
+      sourceCodeUrl: validatedFields.data.sourceCodeUrl || "",
       updatedAt: FieldValue.serverTimestamp(),
     };
 
@@ -130,7 +131,9 @@ export async function getAdminProjects(): Promise<Project[]> {
         title: data.title,
         description: data.description,
         tags: Array.isArray(data.tags) ? data.tags : (typeof data.tags === 'string' ? data.tags.split(',').map(t => t.trim()) : []),
-        imageUrls: Array.isArray(data.imageUrls) ? data.imageUrls : [], // Ensure imageUrls is an array
+        imageUrls: Array.isArray(data.imageUrls) ? data.imageUrls : [],
+        liveDemoUrl: data.liveDemoUrl || undefined,
+        sourceCodeUrl: data.sourceCodeUrl || undefined,
         createdAt: convertTimestamp(data.createdAt),
         updatedAt: convertTimestamp(data.updatedAt),
       } as Project;

@@ -6,7 +6,9 @@ export interface Project {
   title: string;
   description: string;
   tags: string[];
-  imageUrls: string[]; // Changed from imageUrl: string
+  imageUrls: string[];
+  liveDemoUrl?: string;
+  sourceCodeUrl?: string;
   createdAt?: Timestamp | Date | string; 
   updatedAt?: Timestamp | Date | string;
 }

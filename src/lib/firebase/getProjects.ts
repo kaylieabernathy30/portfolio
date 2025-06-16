@@ -16,7 +16,9 @@ export async function getProjects(): Promise<Project[]> {
         title: data.title,
         description: data.description,
         tags: Array.isArray(data.tags) ? data.tags : (typeof data.tags === 'string' ? data.tags.split(',').map(t=>t.trim()) : []),
-        imageUrls: Array.isArray(data.imageUrls) ? data.imageUrls : [], // Ensure imageUrls is an array
+        imageUrls: Array.isArray(data.imageUrls) ? data.imageUrls : [],
+        liveDemoUrl: data.liveDemoUrl || undefined,
+        sourceCodeUrl: data.sourceCodeUrl || undefined,
         createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date()),
         updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : new Date()),
       } as Project;

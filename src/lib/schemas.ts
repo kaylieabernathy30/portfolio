@@ -9,13 +9,15 @@ export const projectFormInputSchema = z.object({
     .min(1, { message: "At least one tag is required." })
     .regex(/^[a-zA-Z0-9\s,-.]+$/, { message: "Tags can only contain letters, numbers, spaces, commas, hyphens and periods."})
     .transform(val => val.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)),
-  imageUrls: z.string() // Input for URLs will be a comma-separated string
-    .default("") // Default to empty string
-    .transform((str) => { // Transform the string into an array of strings
+  imageUrls: z.string()
+    .default("") 
+    .transform((str) => {
       if (!str || str.trim() === "") return [];
       return str.split(',').map(url => url.trim()).filter(url => url !== "");
     })
-    .pipe(z.array(z.string().url({ message: "One or more image URLs are invalid. Please use comma-separated valid URLs." }))), // Validate that each item in the array is a URL
+    .pipe(z.array(z.string().url({ message: "One or more image URLs are invalid. Please use comma-separated valid URLs." }))),
+  liveDemoUrl: z.string().url({ message: "Please enter a valid URL for the live demo." }).optional().or(z.literal('')),
+  sourceCodeUrl: z.string().url({ message: "Please enter a valid URL for the source code." }).optional().or(z.literal('')),
 });
 
 export type ProjectFormData = z.infer<typeof projectFormInputSchema>;
@@ -25,7 +27,9 @@ export const projectServerValidationSchema = z.object({
   title: z.string().min(3).max(100),
   description: z.string().min(10).max(1000),
   tags: z.array(z.string().min(1)).min(1),
-  imageUrls: z.array(z.string().url({ message: "Each image URL must be valid." })), // Expects an array of valid URLs (can be empty)
+  imageUrls: z.array(z.string().url({ message: "Each image URL must be valid." })),
+  liveDemoUrl: z.string().url().optional().or(z.literal('')),
+  sourceCodeUrl: z.string().url().optional().or(z.literal('')),
 });
 
 

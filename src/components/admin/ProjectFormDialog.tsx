@@ -33,7 +33,9 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
       title: "",
       description: "",
       tags: "" as any, 
-      imageUrls: "" as any, // Will be transformed to array by schema
+      imageUrls: "" as any,
+      liveDemoUrl: "",
+      sourceCodeUrl: "",
     },
   });
 
@@ -44,6 +46,8 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
         description: projectToEdit.description,
         tags: projectToEdit.tags.join(", ") as any,
         imageUrls: projectToEdit.imageUrls ? projectToEdit.imageUrls.join(", ") : "" as any,
+        liveDemoUrl: projectToEdit.liveDemoUrl || "",
+        sourceCodeUrl: projectToEdit.sourceCodeUrl || "",
       });
     } else {
       form.reset({
@@ -51,6 +55,8 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
         description: "",
         tags: "" as any,
         imageUrls: "" as any,
+        liveDemoUrl: "",
+        sourceCodeUrl: "",
       });
     }
   }, [projectToEdit, form, isOpen]);
@@ -167,6 +173,32 @@ export function ProjectFormDialog({ isOpen, onClose, projectToEdit, onSuccess }:
                       {...field} 
                       rows={3}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="liveDemoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Live Demo URL (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://project-demo.example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="sourceCodeUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Source Code URL (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://github.com/yourusername/project-repo" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
